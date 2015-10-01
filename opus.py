@@ -10,7 +10,7 @@ def makeDirectoryStructure(slowstoragedir):
 	downloadpath = os.path.join(slowstoragedir,'downloaded')	
 	if not os.path.exists(downloadpath):
 		os.makedirs(downloadpath)
-	expandpathpath = os.path.join(slowstoragedir,'expanded')	
+	expandpath = os.path.join(slowstoragedir,'expanded')	
 	if not os.path.exists(expandpath):
 		os.makedirs(expandpath)	
 	combinedpath = os.path.join(slowstoragedir,'combined')
@@ -20,19 +20,18 @@ def makeDirectoryStructure(slowstoragedir):
 
 
 def downloadLanguage(language, downloadpath, expandpath):
-	'''download the tar file and extract it for a specific language'''
-	pdb.set_trace()		
+	'''download the tar file and extract it for a specific language'''		
 	years = ['2012', '2013']	
-	filename = 'en.tar.gz'			   
+	filename = language+'.tar.gz'			   
 	for year in years:
 		if not os.path.exists(os.path.join(downloadpath, year + '_' + filename)):
 			url = 'http://opus.lingfil.uu.se/download.php?f=OpenSubtitles'+year+'/'+filename
 			urllib.urlretrieve(url, os.path.join(downloadpath,year+'_'+filename))	
-	tar = tarfile.open(os.path.join(downloadpath,year+'_'+filename), 'r')
-	success = [tar.extract(item, expandpath) for item in tar]	
+		tar = tarfile.open(os.path.join(downloadpath,year+'_'+filename), 'r')
+		success = [tar.extract(item, expandpath) for item in tar]	
 
-	#missing XML node in 2012 data-- !!! not sure the programmatic fix works
-	os.system('mv '+os.path.join(expandpath, 'OpenSubtitles2012','en')+' '+os.path.join(expandpath, 'OpenSubtitles2012','xml'))
+		#missing XML node in 2012 data-- !!! not sure the programmatic fix works
+		os.system('mv '+os.path.join(expandpath, 'OpenSubtitles2012',language)+' '+os.path.join(expandpath, 'OpenSubtitles2012','xml'))
 	print('Finished dowloading and extracting language: '+language)
 
 def processLanguage(language, expandpath, outputdir):
@@ -55,16 +54,15 @@ def processLanguage(language, expandpath, outputdir):
 		p = extractionWorker( q,myList )
 		procs.append(p)
 		p.start()
-	
-	subPaths = [x[0] for x in os.walk(expandpath)]
+		
+	subPaths = [x[0] for x in os.walk(os.path.join(expandpath, 'OpenSubtitles2013', 'xml' ,language))]
 	files = []
 	[files.append(glob.glob(path+'/*.xml.gz')) for path in subPaths]	
 	files = [x[0] for x in files if len(x) > 0]
 
 	if len(files) == 0:			
 		raise ValueError('No files found')		
-	
-	pdb.set_trace()              	
+	         	
 	filesizes = [(x, os.stat(x).st_size) for x in files]
 	filesizes.sort(key=lambda tup: tup[1], reverse=True) #start with the biggest files
 	
