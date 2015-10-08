@@ -44,6 +44,8 @@ def processLanguage(language, expandpath, outputdir):
 	opus.processLanguage(language, expandpath, outputdir)
 
 
+
+
 @cli.command()
 @click.option('--combinedpath', type=click.Path(), help="Directory of the cleaned, individual text files", required=True)
 @click.option('--outputfile', type=click.Path(), help="Path of the combined file", required=True)	

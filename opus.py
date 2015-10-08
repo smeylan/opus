@@ -16,7 +16,11 @@ def makeDirectoryStructure(slowstoragedir):
 	combinedpath = os.path.join(slowstoragedir,'combined')
 	if not os.path.exists(combinedpath):
 		os.makedirs(combinedpath)
-	return({'downloadpath': downloadpath, 'combinedpath':combinedpath, 'expandpath':expandpath})
+	intermediatecountpath = os.path.join(slowstoragedir,'intermediatecount')	
+	if not os.path.exists(intermediatecountpath):
+		os.makedirs(intermediatecountpath)
+
+	return({'downloadpath': downloadpath, 'combinedpath':combinedpath, 'expandpath':expandpath, 'intermediatecountpath': intermediatecountpath})
 
 
 def downloadLanguage(language, downloadpath, expandpath):
@@ -141,9 +145,10 @@ def makeRemap():
 	#build a dictionary for replacing contractions with their longforms, uppercase closed-class words with lowercase ones
 	pronominals = ['I','We', 'You', 'He', 'She', 'They', 'It', 'This', 'There', 'That', 'Here','Where', 'How', 'Who', 'What', 'When', 'Why']
 
-	shortForms = ["'ve", "'m", "'s", "'re", "'ll"]
+	shortForms = ["'ve", "'m", "'s", "'re", "'ll",
+	"’ve", "’m", "’s", "’re", "’ll"]
 	longForms = ['have', 'am','is', 'are', "will"]
-	verbs = ['Was','Are','Can','Must','Should','Could', 'Do', 'Is', 'Would', 'Did']
+	verbs = ['Was','Are','Can','Must','Should','Could', 'Do', 'Is', 'Would', 'Did','Had']
 
 	replaceGrid = pandas.DataFrame(expandgrid(pronominals, shortForms)) #unattested forms are fine-- they just don't show up in the corpus
 	replaceGrid.columns = ['pronouns','aux']
