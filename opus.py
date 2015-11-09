@@ -63,7 +63,7 @@ def processLanguage(language, expandpath, outputdir):
 	files = []
 	[files.append(glob.glob(path+'/*.xml.gz')) for path in subPaths]	
 	files = [x[0] for x in files if len(x) > 0]
-
+	
 	if len(files) == 0:			
 		raise ValueError('No files found')		
 	         	
@@ -72,7 +72,7 @@ def processLanguage(language, expandpath, outputdir):
 	
 	# Add data, in the form of a dictionary to the queue for our processeses to grab    
 	extension = '.txt'
-	[q.put({"inputfile": file[0], "outputfile": os.path.join(outputdir, language, os.path.splitext(os.path.basename(file[0]))[0]+extension)}) for file in filesizes] 
+	[q.put({"inputfile": file[0], "outputfile": os.path.join(outputdir, language, os.path.splitext(os.path.basename(file[0]))[0]+extension), 'remap':None}) for file in filesizes] 
       
 	#append none to kill the workers with poison pills		
 	for i in range(24):
@@ -98,16 +98,16 @@ class extractionWorker(multiprocessing.Process):
     def run(self):    	
         for job in iter(self.queue.get, None): # Call until the sentinel None is returned
         	try:
-        		extractText(job['inputfile'], job['outputfile'])        
+        		extractText(job['inputfile'], job['outputfile'], job['remap'])        
         	except ValueError:
         		print 'Problems encountered in cleaning '+job['inputfile']
 			self.myList.append(job['inputfile'])
 
 
-def extractText(inputfile, outputfile, remap=None):	
+def extractText(inputfile, outputfile, remap=None):
 	'''unzip, parse the XML, and extract the sentences from a compressed movie file ffom OPUS''' 
-	if not remap: #if not specified, get the default word replacement hash table
-		remap = makeRemap()
+	#if not remap: #if not specified, get the default word replacement hash table
+	#	remap = makeRemap()
 
 	#!!! are the libraries globally accessible?
 	#characters to clean out	
@@ -115,15 +115,22 @@ def extractText(inputfile, outputfile, remap=None):
 	exclude.update(' ')
 	exclude.remove("'")
 
-	dom = parseString(gzip.open(inputfile).read())
+	try: 
+		dom = parseString(codecs.open(inputfile, encoding='utf-8').read()) #sometimes it is already a text file, though it called gz?
+	except: 		
+		dom = parseString(gzip.open(inputfile).read()) 	
+
 	sentence_list = dom.getElementsByTagName('s')
 	parsed_sentences = []
 	for s in sentence_list:
 		words = [w.firstChild.nodeValue for w in s.getElementsByTagName('w') if w.firstChild != None]
 		words = [''.join(ch for ch in s if ch not in exclude) for s in words]
 		sentence = " ".join([w for w in words if w != ""])
-		sentence = re.sub(" '","'", sentence, count= 0)		
-		parsed_sentences.append(' '.join([wordProcess(x, remap) for x in sentence.split(' ')]))
+		sentence = re.sub(" '","'", sentence, count= 0)	
+		if remap:	
+			parsed_sentences.append(' '.join([wordProcess(x, remap) for x in sentence.split(' ')]))
+		else:
+			parsed_sentences.append(' '.join(sentence.split(' ')))
 	movie_string = '\n'.join(parsed_sentences) #all text in the movie	
 	outfile = codecs.open(outputfile, 'w', 'utf-8')
 	outfile.write(movie_string)
@@ -192,4 +199,13 @@ def combineLanguage(combinedpath, outputfile):
 	''' wrapper for cat'''
 	os.system('find '+combinedpath+" -name '*.txt' -exec cat {} + > "+outputfile)
 	print('Text files combined')
+
+def augmentOPUSfile(inputfile, mergefile, outputfile):	
+	'''augment an OPUS files with additional annotations, e.g. adding a column with segmented Sampa from Lexique to the French data, 
+	or segmented ''' 
+	iff = pandas.read_table(inputfile, encoding='utf-8').dropna()
+	mff = pandas.read_table(mergefile, encoding='utf-8').dropna()
+	iff_m = iff.merge(mff, left_on="word", right_on="word")
+	iff_m.to_table(off, encoding='utf-8') #!!! keep with the same format
+	
 

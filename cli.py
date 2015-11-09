@@ -30,9 +30,9 @@ def downloadLanguage(language, downloadpath, expandpath):
 @cli.command()
 @click.option('--inputfile', type=click.Path(), help="Path of the compressed input file", required=True)
 @click.option('--outputfile', type=click.Path(), help="Path for the yielded text file", required=True)
-def extractText(inputfile, outputfile):
+def extractText(inputfile, outputfile, remap=None):
 	'''unzip, parse the XML, and extract the sentences from a compressed movie file ffom OPUS''' 
-	opus.extractText(inputfile, outputfile)	
+	opus.extractText(inputfile, outputfile, remap)	
 
 #processLanguage
 @cli.command()
@@ -43,14 +43,28 @@ def processLanguage(language, expandpath, outputdir):
 	'''Run extract text on a large number of .gz files'''
 	opus.processLanguage(language, expandpath, outputdir)
 
-
-
-
+#combineLanguage
 @cli.command()
 @click.option('--combinedpath', type=click.Path(), help="Directory of the cleaned, individual text files", required=True)
 @click.option('--outputfile', type=click.Path(), help="Path of the combined file", required=True)	
 def combineLanguage(combinedpath, outputfile):
 	opus.combineLanguage(combinedpath, outputfile)	
+
+
+#extractText
+@cli.command()
+@click.option('--inputfile', type=click.Path(), help="Path of the input OPUS file", required=True)
+@click.option('--mergefile', type=click.Path(), help="Path of the file to merge against", required=True)
+@click.option('--outputfile', type=click.Path(), help="Path for the yielded text file", required=True)
+def augmentOPUSfile(inputfile, mergefile, outputfile):
+	'''augment an OPUS files with additional annotations, e.g. adding a column with segmented Sampa from Lexique to the French data, 
+	or segmented ''' 
+	opus.augmentOPUSfile(inputfile, mergefile, outputfile)	
+
+
 	
 if __name__ == '__main__':
 	cli()
+
+
+
